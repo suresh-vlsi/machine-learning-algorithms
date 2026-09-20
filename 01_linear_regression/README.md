@@ -1,510 +1,770 @@
 # Linear Regression & Optimization from Scratch
 
-A from-scratch implementation and mathematical study of **Linear
-Regression, Gradient Descent, Gradient Checking, Loss Surfaces,
-Learning-Rate Stability, Feature Scaling, Momentum, Nesterov Accelerated
-Gradient, AdaGrad, RMSProp, and Adam**.
+A from-scratch implementation and mathematical study of **Linear Regression, Gradient Descent, Gradient Checking, Loss Surfaces, Learning-Rate Stability, Feature Scaling, Momentum, Nesterov Accelerated Gradient, AdaGrad, RMSProp, and Adam**.
 
-## Learning Path
+The purpose of this project is to connect the mathematics of optimization directly to executable Python experiments rather than treating optimizers as black boxes.
 
-``` text
-Linear Regression
-       |
-       v
-Loss Function
-       |
-       v
-Gradient
-       |
-       v
-Gradient Descent
-       |
-       v
-Learning Rate
-       |
-       v
-Hessian + Stability
-       |
-       v
-Feature Scaling
-       |
-       v
-Momentum
-       |
-       v
-Nesterov
-       |
-       v
-AdaGrad
-       |
-       v
-RMSProp
-       |
-       v
-Adam
-```
+---
+
+## Table of Contents
+
+- [1. Project Overview](#1-project-overview)
+- [2. Dataset](#2-dataset)
+- [3. Linear Regression](#3-linear-regression)
+- [4. Mean Squared Error](#4-mean-squared-error)
+- [5. Gradient](#5-gradient)
+- [6. Gradient Descent](#6-gradient-descent)
+- [7. Loss Curves and Convergence](#7-loss-curves-and-convergence)
+- [8. Loss Surface](#8-loss-surface)
+- [9. Gradient Direction](#9-gradient-direction)
+- [10. Gradient Checking](#10-gradient-checking)
+- [11. Learning Rate](#11-learning-rate)
+- [12. Hessian and Eigenvalues](#12-hessian-and-eigenvalues)
+- [13. Stability Boundary](#13-stability-boundary)
+- [14. Feature Scaling](#14-feature-scaling)
+- [15. Condition Number](#15-condition-number)
+- [16. Parameter Trajectory](#16-parameter-trajectory)
+- [17. Momentum](#17-momentum)
+- [18. Momentum Beta](#18-momentum-beta)
+- [19. Nesterov Accelerated Gradient](#19-nesterov-accelerated-gradient)
+- [20. AdaGrad](#20-adagrad)
+- [21. RMSProp](#21-rmsprop)
+- [22. Adam](#22-adam)
+- [23. Algorithm Comparison](#23-algorithm-comparison)
+- [24. Project Structure](#24-project-structure)
+- [25. Installation](#25-installation)
+- [26. Commands](#26-commands)
+- [27. What Was Implemented](#27-what-was-implemented)
+- [28. Conclusion](#28-conclusion)
+
+---
 
 ## 1. Project Overview
 
-This project studies Linear Regression and optimization from first
-principles. The core algorithms are implemented directly using Python
-and NumPy rather than treating optimizers as black boxes.
+The project develops optimization progressively:
 
-The project connects:
+```text
+Linear Regression
+      |
+      v
+Mean Squared Error
+      |
+      v
+Gradient
+      |
+      v
+Gradient Descent
+      |
+      +--------------------+
+      |                    |
+      v                    v
+Learning Rate        Gradient Checking
+      |
+      v
+Hessian + Eigenvalues
+      |
+      v
+Stability
+      |
+      v
+Feature Scaling + Conditioning
+      |
+      v
+Momentum
+      |
+      v
+Nesterov
+      |
+      v
+AdaGrad
+      |
+      v
+RMSProp
+      |
+      v
+Adam
+```
 
--   Linear algebra
--   Multivariable calculus
--   Numerical optimization
--   Numerical stability
--   Machine learning
+The project connects **multivariable calculus, linear algebra, numerical optimization, and machine learning**.
 
-## 2. Learning Objectives
+---
 
--   Understand Linear Regression mathematically.
--   Implement Mean Squared Error manually.
--   Derive and implement analytical gradients.
--   Implement Gradient Descent from scratch.
--   Visualize loss surfaces and optimization trajectories.
--   Verify gradients numerically.
--   Study learning-rate effects and stability.
--   Understand Hessian curvature and eigenvalues.
--   Understand feature scaling and conditioning.
--   Implement Momentum and Nesterov.
--   Implement AdaGrad, RMSProp, and Adam.
--   Compare optimization methods experimentally.
+## 2. Dataset
+
+The working example is a simple one-feature regression problem:
+
+```text
+Hours Studied     Exam Score
+1                 35
+2                 42
+3                 51
+4                 58
+5                 66
+6                 73
+```
+
+Therefore:
+
+```math
+X = [1,2,3,4,5,6], \qquad
+ y = [35,42,51,58,66,73].
+```
+
+---
 
 ## 3. Linear Regression
 
 The model is:
 
-\[ `\boxed{\hat y=b_0+b_1x}`{=tex} \]
-
-where `b0` is the intercept and `b1` is the slope.
-
-For parameters
-
-\[ `\theta`{=tex}=
-```{=tex}
-\begin{bmatrix}
-b_0\\
-b_1
-\end{bmatrix}
+```math
+\hat{y}_i = b_0 + b_1 x_i
 ```
-\]
 
-the objective is to find parameters that minimize prediction error.
+where:
+
+- $b_0$ = intercept
+- $b_1$ = slope
+- $x_i$ = input feature
+- $y_i$ = target
+- $\hat y_i$ = prediction
+
+Parameter vector:
+
+```math
+\theta =
+\begin{bmatrix}
+ b_0 \\
+ b_1
+\end{bmatrix}.
+```
+
+---
 
 ## 4. Mean Squared Error
 
-The loss function is:
+The project uses Mean Squared Error (MSE):
 
-\[ `\boxed{
-J(b_0,b_1)=
+```math
+J(b_0,b_1)
+=
 \frac{1}{n}
 \sum_{i=1}^{n}
-(\hat y_i-y_i)^2
-}`{=tex} \]
+(\hat y_i-y_i)^2.
+```
 
 Substituting the model:
 
-\[ `\boxed{
-J(b_0,b_1)=
+```math
+J(b_0,b_1)
+=
 \frac{1}{n}
 \sum_{i=1}^{n}
-(b_0+b_1x_i-y_i)^2
-}`{=tex} \]
-
-The optimization problem is:
-
-\[ `\boxed{\min_{b_0,b_1}J(b_0,b_1)}`{=tex} \]
-
-## 5. Gradient
-
-The gradient is:
-
-\[ `\nabla `{=tex}J=
-```{=tex}
-\begin{bmatrix}
-\frac{\partial J}{\partial b_0}\\
-\frac{\partial J}{\partial b_1}
-\end{bmatrix}
+(b_0+b_1x_i-y_i)^2.
 ```
-\]
 
-with
+Optimization objective:
 
-\[ `\boxed{
-\frac{\partial J}{\partial b_0}
-=
-\frac{2}{n}\sum(\hat y-y)
-}`{=tex} \]
+```math
+\boxed{\min_{b_0,b_1} J(b_0,b_1)}.
+```
 
-and
+Residual:
 
-\[ `\boxed{
-\frac{\partial J}{\partial b_1}
-=
-\frac{2}{n}\sum(\hat y-y)x
-}`{=tex} \]
-
-## 6. Gradient Descent
-
-The fundamental update is:
-
-\[ `\boxed{
-\theta_{t+1}
-=
-\theta_t-\alpha\nabla J(\theta_t)
-}`{=tex} \]
-
-where `alpha` is the learning rate.
-
-The gradient points toward increasing loss, so the negative gradient
-points toward decreasing loss:
-
-\[ `\boxed{
-\nabla J=\text{uphill},\qquad
--\nabla J=\text{downhill}
-}`{=tex} \]
-
-## 7. Loss Curves and Loss Surfaces
-
-The project visualizes:
-
--   MSE versus iteration.
--   2D contour loss surfaces.
--   3D loss surfaces.
--   Gradient and negative-gradient vectors.
--   Parameter trajectories.
-
-The two-parameter loss is:
-
-\[ J=J(b_0,b_1) \]
-
-The optimization path can therefore be observed directly in parameter
-space.
-
-## 8. Gradient Checking
-
-The analytical gradient is verified using the central finite-difference
-approximation:
-
-\[ `\boxed{
-\frac{\partial J}{\partial\theta}
-\approx
-\frac{
-J(\theta+\epsilon)-J(\theta-\epsilon)
-}{
-2\epsilon
-}
-}`{=tex} \]
-
-The goal is:
-
-\[ `\boxed{
-\nabla J_{analytical}
-\approx
-\nabla J_{numerical}
-}`{=tex} \]
-
-This provides an independent check of derivative implementations.
-
-## 9. Learning Rate
-
-The learning rate controls the size of each update.
-
-### Small learning rate
-
-Stable but potentially slow.
-
-### Appropriate learning rate
-
-Efficient convergence.
-
-### Large learning rate
-
-May cause:
-
--   Overshooting
--   Oscillation
--   Divergence
--   Very large loss
--   Numerical overflow
+```math
+e_i = \hat y_i-y_i.
+```
 
 Therefore:
 
-\[
-`\boxed{\text{Learning rate is a stability-critical hyperparameter}}`{=tex}
-\]
-
-## 10. Hessian
-
-The Hessian is:
-
-\[ `\boxed{H=\nabla^2J(\theta)}`{=tex} \]
-
-For the Linear Regression experiment, the Hessian was approximately:
-
-\[ H=
-```{=tex}
-\begin{bmatrix}
-2 & 7\\
-7 & 30.3333
-\end{bmatrix}
+```math
+J = \frac{1}{n}\sum_{i=1}^{n}e_i^2.
 ```
-\]
 
-with eigenvalues approximately:
+---
 
-\[ `\lambda`{=tex}\_1`\approx0.3649`{=tex} \]
+## 5. Gradient
 
-\[ `\lambda`{=tex}\_2`\approx31.9684`{=tex} \]
+The gradient is the vector of partial derivatives:
 
-The largest eigenvalue determines the most restrictive curvature
-direction.
+```math
+\nabla J =
+\begin{bmatrix}
+\dfrac{\partial J}{\partial b_0} \\
+\dfrac{\partial J}{\partial b_1}
+\end{bmatrix}.
+```
 
-## 11. Stability Boundary
+### Derivative with respect to $b_0$
 
-For a quadratic objective, Gradient Descent is stable when:
-
-\[ `\boxed{
-0<\alpha<\frac{2}{\lambda_{max}}
-}`{=tex} \]
-
-Using:
-
-\[ `\lambda`{=tex}\_{max}`\approx31.9684`{=tex} \]
-
-gives:
-
-\[ `\boxed{\alpha<0.06256}`{=tex} \]
-
-The stability-boundary experiment verifies the relationship between
-Hessian curvature and maximum stable learning rate.
-
-## 12. Feature Scaling
-
-Standardization is:
-
-\[ `\boxed{
-x_{scaled}=\frac{x-\mu}{\sigma}
-}`{=tex} \]
-
-Feature scaling can make the optimization geometry better conditioned
-and can significantly improve convergence.
-
-The project visualizes the difference through loss curves and parameter
-trajectories.
-
-## 13. Parameter Trajectory
-
-The parameters are tracked as:
-
-\[ (b_0,b_1) \]
-
-at every iteration.
-
-This shows how the optimizer moves through parameter space rather than
-only showing whether the loss decreases.
-
-## 14. Momentum
-
-Momentum introduces a velocity term:
-
-\[ `\boxed{
-v_t=\beta v_{t-1}-\alpha g_t
-}`{=tex} \]
-
-followed by:
-
-\[ `\boxed{
-\theta_{t+1}=\theta_t+v_t
-}`{=tex} \]
-
-Momentum incorporates historical gradient information and can accelerate
-movement along consistent directions.
-
-## 15. Momentum Beta Experiment
-
-The coefficient `beta` controls how strongly previous velocity is
-retained.
-
-Values explored include:
-
-\[ `\beta=0`{=tex},;0.5,;0.9,;0.99 \]
-
-When:
-
-\[ `\beta=0`{=tex} \]
-
-the method reduces to ordinary Gradient Descent.
-
-Large momentum can also produce oscillations or overshooting depending
-on the learning rate and curvature.
-
-## 16. Nesterov Accelerated Gradient
-
-Nesterov first evaluates a look-ahead position:
-
-\[ `\boxed{
-\theta_{lookahead}
+```math
+\frac{\partial J}{\partial b_0}
 =
-\theta_t+\beta v_t
-}`{=tex} \]
+\frac{2}{n}
+\sum_{i=1}^{n}(\hat y_i-y_i).
+```
+
+### Derivative with respect to $b_1$
+
+```math
+\frac{\partial J}{\partial b_1}
+=
+\frac{2}{n}
+\sum_{i=1}^{n}(\hat y_i-y_i)x_i.
+```
+
+Therefore:
+
+```math
+\boxed{
+\nabla J=
+\begin{bmatrix}
+\dfrac{2}{n}\sum_i(\hat y_i-y_i) \\
+\dfrac{2}{n}\sum_i(\hat y_i-y_i)x_i
+\end{bmatrix}}
+```
+
+---
+
+## 6. Gradient Descent
+
+The core update is:
+
+```math
+\boxed{
+\theta_{t+1}
+=
+\theta_t-\alpha\nabla J(\theta_t)
+}
+```
+
+For the two parameters:
+
+```math
+\boxed{
+ b_0^{(t+1)} = b_0^{(t)}
+ - \alpha\frac{\partial J}{\partial b_0}
+}
+```
+
+```math
+\boxed{
+ b_1^{(t+1)} = b_1^{(t)}
+ - \alpha\frac{\partial J}{\partial b_1}
+}
+```
+
+The negative sign is what makes the method descend the objective.
+
+---
+
+## 7. Loss Curves and Convergence
+
+The loss history records:
+
+```math
+J_0,J_1,J_2,\ldots,J_T.
+```
+
+A successful run generally moves toward a lower loss:
+
+```text
+Loss
+ ^
+ |\
+ | \
+ |  \
+ |   \________
+ |
+ +--------------------> Iteration
+```
+
+The project records and plots the entire history instead of hiding the optimization process.
+
+---
+
+## 8. Loss Surface
+
+With two parameters, the objective is a surface:
+
+```math
+J = J(b_0,b_1).
+```
+
+A contour plot shows equal-loss curves. A 3D plot shows:
+
+```math
+z = J(b_0,b_1).
+```
+
+The Gradient Descent path is:
+
+```math
+(b_0^{(0)},b_1^{(0)})
+\rightarrow
+(b_0^{(1)},b_1^{(1)})
+\rightarrow \cdots \rightarrow
+(b_0^{(T)},b_1^{(T)}).
+```
+
+---
+
+## 9. Gradient Direction
+
+The gradient points toward the direction of steepest local increase:
+
+```math
+\boxed{\nabla J = \text{steepest ascent direction}}.
+```
+
+Therefore:
+
+```math
+\boxed{-\nabla J = \text{steepest descent direction}}.
+```
+
+For a small displacement $\Delta\theta$:
+
+```math
+J(\theta+\Delta\theta)
+\approx
+J(\theta)+\nabla J(\theta)^T\Delta\theta.
+```
+
+Choose:
+
+```math
+\Delta\theta=-\alpha\nabla J.
+```
 
 Then:
 
-\[ `\boxed{
-g_t=\nabla J(\theta_{lookahead})
-}`{=tex} \]
-
-followed by:
-
-\[ `\boxed{
-v_{t+1}=\beta v_t-\alpha g_t
-}`{=tex} \]
-
-and:
-
-\[ `\boxed{
-\theta_{t+1}=\theta_t+v_{t+1}
-}`{=tex} \]
-
-Conceptually:
-
-``` text
-Current position
-      |
-      v
-Predict momentum movement
-      |
-      v
-Look ahead
-      |
-      v
-Calculate gradient
-      |
-      v
-Correct movement
+```math
+\Delta J
+\approx
+-\alpha\nabla J^T\nabla J
+=
+-\alpha\lVert\nabla J\rVert^2
+\le 0.
 ```
 
-## 17. AdaGrad
+So, for sufficiently small positive $\alpha$, the negative-gradient direction locally decreases the loss.
+
+---
+
+## 10. Gradient Checking
+
+The analytical gradient can be independently checked using central finite differences:
+
+```math
+\boxed{
+\frac{\partial J}{\partial \theta}
+\approx
+\frac{
+J(\theta+\epsilon)-J(\theta-\epsilon)
+}{2\epsilon}}
+```
+
+The desired result is:
+
+```math
+\boxed{
+\nabla J_{\text{analytical}}
+\approx
+\nabla J_{\text{numerical}}
+}
+```
+
+This is useful for detecting derivative and implementation mistakes.
+
+---
+
+## 11. Learning Rate
+
+The learning rate is $\alpha$ and controls step size:
+
+```math
+\Delta\theta=-\alpha\nabla J.
+```
+
+### Small $\alpha$
+
+- Small steps
+- Stable but potentially slow convergence
+
+### Appropriate $\alpha$
+
+- Efficient convergence
+
+### Excessive $\alpha$
+
+- Overshooting
+- Oscillation
+- Divergence
+- Very large numerical values
+
+---
+
+## 12. Hessian and Eigenvalues
+
+The Hessian is:
+
+```math
+\boxed{H=\nabla^2J(\theta)}.
+```
+
+For this two-parameter experiment:
+
+```math
+\boxed{
+H=
+\begin{bmatrix}
+2 & 7 \\
+7 & 30.3333
+\end{bmatrix}}
+```
+
+The eigenvalues found experimentally are approximately:
+
+```math
+\lambda_1\approx0.36494,
+\qquad
+\lambda_2\approx31.96839.
+```
+
+Hence:
+
+```math
+\boxed{\lambda_{\max}\approx31.96839}.
+```
+
+The eigenvalues describe the curvature scales of the quadratic objective.
+
+---
+
+## 13. Stability Boundary
+
+For this quadratic objective, the Gradient Descent stability condition is:
+
+```math
+\boxed{
+0<\alpha<\frac{2}{\lambda_{\max}}
+}
+```
+
+Using the measured largest eigenvalue:
+
+```math
+\alpha < \frac{2}{31.96839}
+\approx 0.06256.
+```
+
+So the experiment gives the approximate stability boundary:
+
+```math
+\boxed{\alpha<0.06256}.
+```
+
+Learning rates above the boundary can generate instability and divergence.
+
+---
+
+## 14. Feature Scaling
+
+Standardization is:
+
+```math
+\boxed{x' = \frac{x-\mu}{\sigma}}.
+```
+
+For this dataset:
+
+```math
+\mu=3.5
+```
+
+and approximately:
+
+```math
+X'=[-1.464,-0.878,-0.293,0.293,0.878,1.464].
+```
+
+With standardized $X$, the Hessian becomes approximately:
+
+```math
+H'=
+\begin{bmatrix}
+2&0\\
+0&2
+\end{bmatrix}.
+```
+
+Thus the eigenvalues become approximately $2$ and $2$.
+
+Feature scaling therefore changes the geometry of the optimization problem and can allow larger stable learning rates.
+
+---
+
+## 15. Condition Number
+
+The condition number of the Hessian is:
+
+```math
+\boxed{\kappa(H)=\frac{\lambda_{\max}}{\lambda_{\min}}}.
+```
+
+For the original coordinates:
+
+```math
+\kappa(H)
+\approx
+\frac{31.96839}{0.36494}
+\approx87.6.
+```
+
+For the standardized feature:
+
+```math
+\boxed{\kappa(H')=1}.
+```
+
+A large condition number corresponds to very different curvature scales and can make Gradient Descent follow inefficient trajectories.
+
+---
+
+## 16. Parameter Trajectory
+
+The project tracks:
+
+```math
+\theta_t=
+\begin{bmatrix}
+ b_0^{(t)}\\
+ b_1^{(t)}
+\end{bmatrix}
+```
+
+and plots the path in $(b_0,b_1)$ parameter space.
+
+This shows optimization geometry directly rather than only showing the scalar loss value.
+
+Scaling changes the numerical coordinates of the optimum, but the transformed model can represent the same regression relationship.
+
+---
+
+## 17. Momentum
+
+Vanilla Gradient Descent:
+
+```math
+\theta_{t+1}
+=
+\theta_t-\alpha g_t.
+```
+
+Momentum introduces velocity:
+
+```math
+\boxed{
+v_t=\beta v_{t-1}-\alpha g_t
+}
+```
+
+and then:
+
+```math
+\boxed{
+\theta_{t+1}=\theta_t+v_t
+}
+```
+
+The term $\beta v_{t-1}$ provides memory of previous updates.
+
+When:
+
+```math
+\beta=0
+```
+
+Momentum reduces to ordinary Gradient Descent.
+
+---
+
+## 18. Momentum Beta
+
+The coefficient $\beta$ controls the amount of previous velocity retained.
+
+The project compares:
+
+```math
+\beta\in\{0,0.5,0.9,0.99\}.
+```
+
+Increasing $\beta$ increases inertia. Larger inertia can accelerate motion in consistent directions but can also create overshooting and oscillation.
+
+---
+
+## 19. Nesterov Accelerated Gradient
+
+Nesterov evaluates the gradient after moving to a look-ahead position:
+
+```math
+\boxed{
+\theta_{\text{lookahead}}
+=
+\theta_t+\beta v_t
+}
+```
+
+Then:
+
+```math
+\boxed{
+g_t=\nabla J(\theta_{\text{lookahead}})
+}
+```
+
+Velocity update:
+
+```math
+\boxed{
+v_{t+1}=\beta v_t-\alpha g_t}
+```
+
+Parameter update:
+
+```math
+\boxed{
+\theta_{t+1}=\theta_t+v_{t+1}
+}
+```
+
+The distinguishing idea is:
+
+```text
+Momentum  -> gradient at current position
+Nesterov  -> gradient at look-ahead position
+```
+
+---
+
+## 20. AdaGrad
 
 AdaGrad accumulates squared gradients:
 
-\[ `\boxed{
-G_t=G_{t-1}+g_t^2
-}`{=tex} \]
+```math
+\boxed{G_t=G_{t-1}+g_t^2}.
+```
 
-and updates:
+Update:
 
-\[ `\boxed{
+```math
+\boxed{
 \theta_{t+1}
 =
 \theta_t-
 \frac{\alpha}{\sqrt{G_t}+\epsilon}g_t
-}`{=tex} \]
+}
+```
 
-This creates parameter-specific adaptive learning rates.
+This produces parameter-specific adaptive step sizes.
 
-### Advantage
+The limitation is that $G_t$ never decreases, so the effective learning rate can become very small after long training.
 
-Large or frequently occurring gradients receive progressively smaller
-effective updates.
+---
 
-### Limitation
+## 21. RMSProp
 
-The accumulator only grows, so the effective learning rate can
-eventually become extremely small.
+RMSProp replaces permanent accumulation with an exponential moving average:
 
-## 18. RMSProp
+```math
+\boxed{
+S_t=eta S_{t-1}+(1-\beta)g_t^2
+}
+```
 
-RMSProp uses an exponentially weighted average of squared gradients:
+Update:
 
-\[ `\boxed{
-S_t=
-\beta S_{t-1}
-+
-(1-\beta)g_t^2
-}`{=tex} \]
-
-The update is:
-
-\[ `\boxed{
+```math
+\boxed{
 \theta_{t+1}
 =
 \theta_t-
 \frac{\alpha}{\sqrt{S_t}+\epsilon}g_t
-}`{=tex} \]
+}
+```
 
-Unlike AdaGrad, old gradients gradually lose influence.
+Recent squared gradients receive more influence than old squared gradients.
 
-## 19. Adam
+---
 
-Adam combines momentum-like first-moment estimation with RMSProp-like
-second-moment estimation.
+## 22. Adam
+
+Adam combines a first-moment estimate with a second-moment estimate.
 
 First moment:
 
-\[ `\boxed{
-m_t=
-\beta_1m_{t-1}
-+
-(1-\beta_1)g_t
-}`{=tex} \]
+```math
+\boxed{
+m_t=\beta_1m_{t-1}+(1-\beta_1)g_t}
+```
 
 Second moment:
 
-\[ `\boxed{
-v_t=
-\beta_2v_{t-1}
-+
-(1-\beta_2)g_t^2
-}`{=tex} \]
+```math
+\boxed{
+v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2}
+```
 
 Bias correction:
 
-\[ `\boxed{
-\hat m_t=
-\frac{m_t}{1-\beta_1^t}
-}`{=tex} \]
+```math
+\boxed{
+\hat m_t=\frac{m_t}{1-\beta_1^t}
+}
+```
 
-\[ `\boxed{
-\hat v_t=
-\frac{v_t}{1-\beta_2^t}
-}`{=tex} \]
+```math
+\boxed{
+\hat v_t=\frac{v_t}{1-\beta_2^t}
+}
+```
 
 Final update:
 
-\[ `\boxed{
+```math
+\boxed{
 \theta_{t+1}
 =
-\theta_t
--
-\alpha
-\frac{\hat m_t}
+\theta_t-
+\alpha\frac{\hat m_t}
 {\sqrt{\hat v_t}+\epsilon}
-}`{=tex} \]
+}
+```
 
 Typical values:
 
-\[ `\beta`{=tex}\_1=0.9,`\qquad`{=tex}
-`\beta`{=tex}\_2=0.999,`\qquad`{=tex} `\epsilon=10`{=tex}\^{-8} \]
+```math
+\beta_1=0.9,\qquad
+\beta_2=0.999,\qquad
+\epsilon=10^{-8}.
+```
 
-## 20. Optimization Algorithm Comparison
+---
 
-  Algorithm          Main Idea
-  ------------------ ------------------------------------------
-  Gradient Descent   Current gradient
-  Momentum           Gradient + velocity history
-  Nesterov           Momentum + look-ahead gradient
-  AdaGrad            Accumulated squared gradients
-  RMSProp            Moving average of squared gradients
-  Adam               First + second moments + bias correction
+## 23. Algorithm Comparison
 
-Conceptually:
+| Algorithm | Main idea |
+|---|---|
+| Gradient Descent | Current gradient |
+| Momentum | Gradient + velocity history |
+| Nesterov | Look-ahead gradient + momentum |
+| AdaGrad | Accumulated squared gradients |
+| RMSProp | Moving average of squared gradients |
+| Adam | First + second moments + bias correction |
 
-``` text
+Conceptual progression:
+
+```text
 Gradient Descent
       |
       v
@@ -513,32 +773,22 @@ Momentum
       v
 Nesterov
       |
-      +----------------+
-      |                |
-      v                v
-   AdaGrad          RMSProp
-      |                |
-      +-------+--------+
-              |
-              v
-             Adam
+      +--------------+
+      |              |
+      v              v
+   AdaGrad        RMSProp
+      |              |
+      +------+-------+
+             |
+             v
+            Adam
 ```
 
-The major ideas are:
+---
 
-\[ `\boxed{\text{Momentum}\rightarrow\text{direction/history}}`{=tex} \]
+## 24. Project Structure
 
-\[
-`\boxed{\text{AdaGrad/RMSProp}\rightarrow\text{adaptive step size}}`{=tex}
-\]
-
-\[
-`\boxed{\text{Adam}\rightarrow\text{direction + adaptive step size}}`{=tex}
-\]
-
-## 21. Project Structure
-
-``` text
+```text
 01_linear_regression/
 │
 ├── README.md
@@ -558,42 +808,58 @@ The major ideas are:
 ├── nesterov_momentum.py
 ├── adagrad.py
 ├── rmsprop.py
-└── adam.py
+├── adam.py
+│
+├── plots/
+│   ├── 3D Loss Surface and Gradient Descent.png
+│   ├── AdaGrad - Loss vs Iteration.png
+│   ├── Adam-loss vs Iteration.png
+│   ├── Feature Scaling - Loss vs Iteration.png
+│   ├── Gradient and Negative Gradient.png
+│   ├── Gradient Descent - First 30 Iterations.png
+│   ├── Gradient Descent Learning.png
+│   ├── Gradient Descent Near Stability Boundary.png
+│   ├── Gradient Descent Parameter Trajectory.png
+│   ├── Gradient Descent vs Momentum - Loss.png
+│   ├── Momentum Gradient Descent - Effect of beta.png
+│   ├── RMSProp - Loss vs Iteration.png
+│   └── Vanilla GD vs Momentum vs Nesterov.png
+│
+└── docs/
+    └── Linear Regression / Optimization report files
 ```
 
-## 22. Requirements
+---
 
--   Python 3.x
--   NumPy
--   Matplotlib
-
-The core optimization algorithms do not require Scikit-learn.
-
-## 23. Installation
+## 25. Installation
 
 Verify Python:
 
-``` bash
+```powershell
 python --version
 ```
 
 Install dependencies:
 
-``` bash
+```powershell
 pip install numpy matplotlib
 ```
 
-## 24. Running the Experiments
+No Scikit-learn dependency is required for the core implementations in this section.
 
-Open the project directory:
+---
 
-``` powershell
+## 26. Commands
+
+From PowerShell:
+
+```powershell
 cd C:\Users\Lenovo\machine-learning-algorithms\01_linear_regression
 ```
 
-Run individual experiments:
+Run the scripts:
 
-``` powershell
+```powershell
 python linear_regression.py
 python loss_surface.py
 python loss_surface_3d.py
@@ -612,236 +878,89 @@ python rmsprop.py
 python adam.py
 ```
 
-## 25. Key Mathematical Results
+### Git commands
 
-### Linear Regression
+From the repository root:
 
-\[ `\boxed{\hat y=b_0+b_1x}`{=tex} \]
+```powershell
+cd C:\Users\Lenovo\machine-learning-algorithms
+git status
+git add .
+git commit -m "Add linear regression and optimization from scratch"
+git branch -M main
+git remote -v
+git push -u origin main
+```
 
-### MSE
+---
 
-\[ `\boxed{
-J=
-\frac{1}{n}
-\sum_{i=1}^{n}
-(\hat y_i-y_i)^2
-}`{=tex} \]
+## 27. What Was Implemented
 
-### Gradient Descent
+Implemented manually using Python, NumPy, and Matplotlib:
 
-\[ `\boxed{
-\theta_{t+1}
-=
-\theta_t-\alpha\nabla J
-}`{=tex} \]
+- Linear Regression
+- Mean Squared Error
+- Analytical gradients
+- Numerical gradient checking
+- Gradient Descent
+- Loss tracking
+- 2D loss contours
+- 3D loss surface
+- Gradient vector visualization
+- Learning-rate experiments
+- Hessian calculation
+- Eigenvalue analysis
+- Stability boundary experiments
+- Feature scaling
+- Condition-number analysis
+- Parameter trajectories
+- Momentum
+- Momentum beta experiments
+- Nesterov Accelerated Gradient
+- AdaGrad
+- RMSProp
+- Adam
 
-### Numerical Gradient
+The project therefore exposes the mechanics of optimization rather than hiding them inside a library optimizer.
 
-\[ `\boxed{
-\frac{\partial J}{\partial\theta}
-\approx
-\frac{
-J(\theta+\epsilon)-J(\theta-\epsilon)
-}{
-2\epsilon
-}
-}`{=tex} \]
+---
 
-### Stability
+## 28. Conclusion
 
-\[ `\boxed{
-0<\alpha<\frac{2}{\lambda_{max}}
-}`{=tex} \]
+The complete conceptual progression is:
 
-### Momentum
+```text
+Loss
+  |
+  v
+Gradient
+  |
+  v
+Gradient Descent
+  |
+  +--> Learning Rate
+  |
+  +--> Hessian / Eigenvalues / Stability
+  |
+  +--> Feature Scaling / Conditioning
+  |
+  +--> Momentum
+  |       |
+  |       v
+  |    Nesterov
+  |
+  +--> AdaGrad
+  |
+  +--> RMSProp
+  |
+  +--> Adam
+```
 
-\[ `\boxed{
-v_t=\beta v_{t-1}-\alpha g_t
-}`{=tex} \]
+The central objective of the project is to understand not only **what** an optimizer does, but **why** its updates behave as they do.
 
-\[ `\boxed{
-\theta_{t+1}=\theta_t+v_t
-}`{=tex} \]
+### Optimization Complete
 
-### AdaGrad
-
-\[ `\boxed{
-G_t=G_{t-1}+g_t^2
-}`{=tex} \]
-
-### RMSProp
-
-\[ `\boxed{
-S_t=
-\beta S_{t-1}
-+
-(1-\beta)g_t^2
-}`{=tex} \]
-
-### Adam
-
-\[ `\boxed{
-m_t=
-\beta_1m_{t-1}
-+
-(1-\beta_1)g_t
-}`{=tex} \]
-
-\[ `\boxed{
-v_t=
-\beta_2v_{t-1}
-+
-(1-\beta_2)g_t^2
-}`{=tex} \]
-
-## 26. Important Observations
-
-### Gradient Direction
-
-\[ `\nabla `{=tex}J`\rightarrow`{=tex}`\text{uphill}`{=tex} \]
-
-\[ -`\nabla `{=tex}J`\rightarrow`{=tex}`\text{downhill}`{=tex} \]
-
-### Learning Rate
-
-A small learning rate may be slow; a large one can become unstable.
-
-### Hessian
-
-The Hessian describes local curvature. Its largest eigenvalue controls
-the most restrictive direction for Gradient Descent on a quadratic
-objective.
-
-### Feature Scaling
-
-Scaling can improve conditioning and make optimization more efficient.
-
-### Momentum
-
-Momentum adds historical velocity to the current update.
-
-### Nesterov
-
-Nesterov evaluates the gradient at a look-ahead position.
-
-### AdaGrad
-
-AdaGrad adapts learning rates using accumulated squared gradients.
-
-### RMSProp
-
-RMSProp uses a moving average so old gradients gradually lose influence.
-
-### Adam
-
-Adam combines first-moment and second-moment estimates with bias
-correction.
-
-## 27. What Was Implemented From Scratch
-
--   Linear Regression
--   Mean Squared Error
--   Analytical gradients
--   Numerical gradients
--   Gradient Descent
--   Loss tracking
--   Loss surface visualization
--   3D loss-surface visualization
--   Gradient vector visualization
--   Gradient checking
--   Learning-rate experiments
--   Hessian analysis
--   Eigenvalue analysis
--   Stability analysis
--   Feature scaling
--   Parameter trajectory tracking
--   Momentum
--   Momentum beta experiments
--   Nesterov Accelerated Gradient
--   AdaGrad
--   RMSProp
--   Adam
-
-## 28. Future Extensions
-
-### Optimization
-
--   Mini-batch Gradient Descent
--   Stochastic Gradient Descent
--   AdamW
--   Nadam
--   AMSGrad
--   Learning-rate scheduling
--   Cosine decay
--   Exponential decay
--   Warm-up schedules
-
-### Regression
-
--   Multiple Linear Regression
--   Polynomial Regression
--   Ridge Regression
--   Lasso Regression
--   Elastic Net
-
-### Machine Learning
-
--   Logistic Regression
--   Perceptron
--   k-Nearest Neighbors
--   Decision Trees
--   Support Vector Machines
--   Neural Networks
-
-## 29. Conclusion
-
-The project develops optimization progressively:
-
-\[ `\boxed{
-\text{Loss}
-\rightarrow
-\text{Gradient}
-\rightarrow
-\text{Gradient Descent}
-}`{=tex} \]
-
-then:
-
-\[ `\boxed{
-\text{Learning Rate}
-\rightarrow
-\text{Hessian}
-\rightarrow
-\text{Stability}
-}`{=tex} \]
-
-then:
-
-\[ `\boxed{
-\text{Feature Scaling}
-\rightarrow
-\text{Momentum}
-\rightarrow
-\text{Nesterov}
-}`{=tex} \]
-
-and finally:
-
-\[ `\boxed{
-\text{AdaGrad}
-\rightarrow
-\text{RMSProp}
-\rightarrow
-\text{Adam}
-}`{=tex} \]
-
-The central objective is not merely to obtain a regression line, but to
-understand **why optimization algorithms move the way they do** and to
-connect the mathematics directly to executable Python experiments.
-
-## Optimization Section Completed
-
-``` text
+```text
 ✓ Linear Regression
 ✓ MSE
 ✓ Gradient
@@ -855,6 +974,7 @@ connect the mathematics directly to executable Python experiments.
 ✓ Eigenvalues
 ✓ Stability Boundary
 ✓ Feature Scaling
+✓ Condition Number
 ✓ Parameter Trajectory
 ✓ Momentum
 ✓ Momentum Beta
