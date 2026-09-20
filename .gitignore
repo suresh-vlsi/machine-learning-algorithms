@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# VS Code
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Python distribution files
+build/
+dist/
+*.egg-info/
+
+# Compiled Python
+*.pyc
