@@ -4,6 +4,14 @@ A from-scratch implementation and mathematical study of **Linear Regression, Gra
 
 The purpose of this project is to connect the mathematics of optimization directly to executable Python experiments rather than treating optimizers as black boxes.
 
+## Interactive Google Colab Demo
+
+Run the complete optimization project interactively in Google Colab:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/suresh-vlsi/machine-learning-algorithms/blob/main/01_linear_regression/notebooks/Linear_Regression_Optimization_Demo.ipynb)
+
+The notebook demonstrates Linear Regression, Gradient Descent, loss surfaces, gradient checking, learning-rate stability, feature scaling, Momentum, Nesterov, AdaGrad, RMSProp, and Adam with executable NumPy code and visualizations.
+
 ---
 
 ## Table of Contents
